@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gambar nya ngeklip</title>
+</head>
+<style>
+    body {
+  background-color: black;
+  height: 100vh;
+  margin: 0px;
+  overflow: hidden;
+}
+
+.image {
+  width: 40vmin;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.image[data-status="inactive"] {
+  display: none;
+}
+
+.image[data-status="active"] {
+  display: block;
+}
+
+/* -- YouTube Link Styles -- */
+
+body.menu-toggled > .meta-link > span {
+  color: rgb(30, 30, 30);
+}
+
+#source-link {
+  bottom: 60px;
+}
+
+#source-link > i {
+  color: rgb(94, 106, 210);
+}
+
+#yt-link > i {
+  color: rgb(239, 83, 80);
+}
+
+.meta-link {
+  align-items: center;
+  backdrop-filter: blur(3px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  bottom: 10px;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;  
+  display: inline-flex;
+  gap: 5px;
+  left: 10px;
+  padding: 10px 20px;
+  position: fixed;
+  text-decoration: none;
+  transition: background-color 400ms, border-color 400ms;
+  z-index: 10000;
+}
+
+.meta-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.meta-link > i, .meta-link > span {
+  height: 20px;
+  line-height: 20px;
+}
+
+.meta-link > span {
+  color: white;
+  font-family: "Rubik", sans-serif;
+  font-weight: 500;
+}
+</style>
+<body>
+    <img class="image" data-index="0" data-status="inactive" src="https://images.unsplash.com/photo-1663583513676-9f6361cd859d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80" />
+    <img class="image" data-index="1" data-status="inactive" src="https://images.unsplash.com/photo-1663530294185-5af3692326c6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1506&q=80" />
+    <img class="image" data-index="2" data-status="inactive" src="https://images.unsplash.com/photo-1663579111009-863bc978c78e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80" />
+    <img class="image" data-index="3" data-status="inactive" src="https://images.unsplash.com/photo-1663492412083-17bfcad3c533?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80" />
+    <img class="image" data-index="4" data-status="inactive" src="https://images.unsplash.com/photo-1663571473113-d3fc49bbe775?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=986&q=80" />
+    <img class="image" data-index="5" data-status="inactive" src="https://images.unsplash.com/photo-1663431263243-ef4aa402afc6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80" />
+    <img class="image" data-index="6" data-status="inactive" src="https://images.unsplash.com/photo-1663330082092-11fa01e1ee8e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80" />
+    <img class="image" data-index="7" data-status="inactive" src="https://images.unsplash.com/photo-1663450806250-da193dc36368?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1149&q=80" />
+    <img class="image" data-index="8" data-status="inactive" src="https://images.unsplash.com/photo-1663352248740-645afa021c9c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80" />
+    <img class="image" data-index="9" data-status="inactive" src="https://images.unsplash.com/photo-1663431905837-09cf339461ce?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2207&q=80" />
+
+    <!-- <a id="source-link" class="meta-link" href="https://bridget.pictures" target="_blank">
+    <i class="fa-solid fa-link"></i>
+    <span>Source</span> 
+    </a>
+
+    <a id="yt-link" class="meta-link" href="https://youtu.be/Jt3A2lNN2aE" target="_blank">
+    <i class="fa-brands fa-youtube"></i>
+    <span>3 min tutorial</span>
+    </a> -->
+    <script>
+        const images = document.getElementsByClassName("image");
+
+let globalIndex = 0,
+    last = { x: 0, y: 0 };
+
+const activate = (image, x, y) => {
+  image.style.left = `${x}px`;
+  image.style.top = `${y}px`;
+  image.style.zIndex = globalIndex;
+
+  image.dataset.status = "active";
+
+  last = { x, y };
+}
+
+const distanceFromLast = (x, y) => {
+  return Math.hypot(x - last.x, y - last.y);
+}
+
+const handleOnMove = e => {
+  if(distanceFromLast(e.clientX, e.clientY) > (window.innerWidth / 20)) {
+    const lead = images[globalIndex % images.length],
+          tail = images[(globalIndex - 5) % images.length];
+
+    activate(lead, e.clientX, e.clientY);
+
+    if(tail) tail.dataset.status = "inactive";
+    
+    globalIndex++;
+  }
+}
+
+window.onmousemove = e => handleOnMove(e);
+
+window.ontouchmove = e => handleOnMove(e.touches[0]);
+    </script>
+</body>
+</html>
