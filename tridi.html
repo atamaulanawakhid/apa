@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Canvas Helicopter Game</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    </head>
+    <style>
+        body {
+	background: #000;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+			-ms-flex-direction: column;
+					flex-direction: column;
+	height: 100vh;
+	width: 100%;
+}
+h2 {
+	color: #FFF;
+	text-align: center;
+	margin: 20px 0;
+}
+canvas {
+	margin: auto;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+    </style>
+<body>
+    <h2>Use arrow keys and mouse to control</h2>
+    <canvas id="canvas"></canvas>
+    <script>
+        fps = 10;	//unsure wether to keep or not. if do, add to game = {}; or camera
+center = { 
+			radius:1 ,
+			x: CANVAS_WIDTH/2,
+			y: CANVAS_HEIGHT/2,
+			color:"blue",
+		},
+	baddyQ = [//x,y,z,width,length,height
+	0,0,null,10,null,null
+	];
+controls = {
+	interface: {
+
+	},
+	mouse: {
+		x: 0,
+		y: 0,
+		sensitivity: 1,
+	},
+}
+game = {
+	gravity: 100 , 
+	background: {
+		color: "light blue",
+		//add canvas size to this too
+	},
+	size: {
+		width: 1000,
+		height: 1000,
+		length: 1000,
+	},
+};
+player = {
+	color: 'teal',
+	x: 0, //pixels delete later
+	y: 0, //pixels delete later
+  z: 0, //pixels delete later
+	width: 10, //pixels
+	height: 10, //pixels
+  length: 10, //pixels
+	speed: 5, //pixels  
+
+	jump: 10, //percent based off density
+	physics: {
+		density: 1, //per pixel. Delete later and replace with weight
+		weught: 1,
+	},
+	acceleration: {
+		x:0,
+		y:0,
+		z:0,
+},
+	velocity: {
+		x:0,
+		y:0,
+		z:0,
+	},
+	position: {
+		x: 0,//Invalid if followPlayer is true
+		y: -1000,//Invalid if followPlayer is true
+		z: 0,//Invalid if followPlayer is true
+	},
+	rotate: {
+		x:0,
+		y:0,
+		z:0,
+	},
+	screen:{
+		x:0,
+		y:0,
+		z:0,
+	},
+};
+camera = {//add screen width and height on this
+	mouse: false,
+	followPlayer: true,
+	playerRotation: true,
+	xRotation: 0,//delete later
+	yRotation: 0,//delete later
+	zRotation: 0,//delete later
+
+	rotationSpeed: 1,
+	distance: 100,
+	speed:1,
+	position: {
+		x: 0,//Invalid if followPlayer is true
+		y: -100,//Invalid if followPlayer is true
+		z: 0,//Invalid if followPlayer is true
+	},
+	rotate: {
+		x:0,
+		y:0,
+		z:0,
+		speed: 1,
+	},
+	screen:{
+		x:0,
+		y:0,
+		z:0,
+	},
+
+}  
+var	keysDown = {}, 
+		cloud = [],
+		block = [];
+var	CANVAS_HEIGHT = '600',
+		CANVAS_WIDTH = '800',
+		PATH_WIDTH = 20;
+
+var requestAnimFrame = function () { 
+	return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function (callback) {
+		window.setTimeout(callback, 1000 / fps);
+	};  
+}();
+function clearScreen(){
+	ctx.fillStyle = game.background.color;
+	ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_WIDTH);
+}
+
+var render = function render() {
+	clearScreen();
+	movePlayer();
+	moveCamera();
+	moveClouds(); 
+	for (var i = 0; i < cloud.length; i++) {		drawCube(cloud[i]);		}
+	drawCube(player);
+	//drawCube(Block)
+	//drawCenter();
+	interface();
+}
+function interface(){
+	drawWords("player.position.x: "+Math.round(player.position.x),8,20);
+	drawWords("player.position.y: "+Math.round(player.position.y),8,40);
+	drawWords("player.position.z: "+Math.round(player.position.z),8,60);
+	drawWords("player.z.velocity: "+Math.round(player.velocity.z),8,80);
+	drawWords("camera.position.x: "+Math.round(camera.position.x),CANVAS_WIDTH/2-100,20);
+	drawWords("camera.position.y: "+Math.round(camera.position.y),CANVAS_WIDTH/2-100,40);
+	drawWords("camera.position.z: "+Math.round(camera.position.z),CANVAS_WIDTH/2-100,60);
+	drawWords("camera.rotate.x: "+Math.round(camera.rotate.x),CANVAS_WIDTH/2-100,80);
+	drawWords("camera.rotate.y: "+Math.round(camera.rotate.y),CANVAS_WIDTH/2-100,100);
+	drawWords("camera.rotate.z: "+Math.round(camera.rotate.z),CANVAS_WIDTH/2-100,120);//controls.mouse.y
+	drawWords("controls.mouse.x: "+controls.mouse.x,CANVAS_WIDTH-200,20);
+	drawWords("controls.mouse.y: "+controls.mouse.y,CANVAS_WIDTH-200,40);
+}
+var movePlayer = function movePlayer() {
+	//if (controls.mouse.x > 180 || controls.mouse.x < -180){ controls.mouse.x *= -1}
+		v = Math.PI*18
+	x1 = 0;
+	y1 = -100;
+	z1 = 0;
+	x2 = x1*Math.cos(-controls.mouse.x/v) - y1*Math.sin(-controls.mouse.x/v);
+	y2 = x1*Math.sin(-controls.mouse.x/v) + y1*Math.cos(-controls.mouse.x/v);
+	y3 = y2*Math.cos(controls.mouse.y/v) - z1*Math.sin(controls.mouse.y/v);
+	z2 = y2*Math.sin(controls.mouse.y/v) + z1*Math.cos(controls.mouse.y/v);  
+	z3 = z2*Math.cos(0) - x2*Math.sin(0); 
+	x3 = z2*Math.sin(0) + x2*Math.cos(0); 
+	 
+	player.velocity.x = 0
+	player.velocity.y = 0
+	//player.velocity.z
+	
+	//*
+	if (39 in keysDown) {
+		player.velocity.y += player.speed*x3/100;
+		player.velocity.x += -player.speed*y3/100;
+	}//right
+	if (37 in keysDown) {
+		player.velocity.y += -player.speed*x3/100;
+		player.velocity.x += player.speed*y3/100;
+	}//left
+	/*if (40 in keysDown) {
+		player.position.z -= player.speed*z3/100;
+	}//down
+	if (38 in keysDown) {
+		player.position.z += player.speed*z3/100;
+	}//up*/
+
+	if (87 in keysDown) {
+		player.velocity.y += -player.speed*y3/100;
+		player.velocity.x += -player.speed*x3/100;
+	}//w
+	if (83 in keysDown) {
+		player.velocity.y += player.speed*y3/100;
+		player.velocity.x += player.speed*x3/100;
+	}//s
+	if (65 in keysDown) {
+		player.velocity.y += -player.speed*x3/100;
+		player.velocity.x += player.speed*y3/100;
+	}//a 
+	if (68 in keysDown) {
+		player.velocity.y += player.speed*x3/100;
+		player.velocity.x += -player.speed*y3/100;
+	}//d
+	
+
+	
+	for (var i = 0; i < cloud.length; i++){
+		//console.log(path[i].width);
+		if (player.position.x < Math.pow(Math.pow(cloud[i].width,2) - Math.pow(player.position.x,2),1/2) && player.position.y < Math.pow(Math.pow(cloud[i].length,2) - Math.pow(player.position.y,2),1/2) && player.position.z < Math.pow(Math.pow(cloud[i].height,2) - Math.pow(player.position.z,2),1/2)){
+
+		}
+			//change 100 to something like the game time or the screen fps or real life time.
+	}
+	
+	//for (var i = 0; i < cloud.length; i++) {
+		
+
+	
+		/*	for (var i = 0; i < cloud.length; i++) {
+		if (player.position.x - player.width < cloud[i].position.x + cloud[i].width && 
+				player.position.x + player.width > cloud[i].position.x - cloud[i].width && 
+				player.position.y - player.length < cloud[i].position.y + cloud[i].length && 
+				player.position.y + player.length > cloud[i].position.y - cloud[i].length && 
+				player.position.z - player.height < cloud[i].position.z + cloud[i].height && 
+				player.position.z + player.height > cloud[i].position.z - cloud[i].height) {
+					
+					var taco = 0;
+				}
+				else {
+					var taco = 1;
+				}
+			}
+*/
+	//if (taco == 1){
+		
+	//}
+	
+	if (player.position.z < 0) {
+		player.velocity.z = 0;
+		player.position.z = 0;
+	}
+	
+
+		
+	//}
+	
+};
+var moveClouds = function moveClouds() { //--------------------------------------------move path and colisions
+	//t = 2;
+
+  
+  
+	for (var i = 0; i < cloud.length; i++) {
+		
+	cloud[i].position.x += cloud[i].velocity.x;
+	cloud[i].position.y += cloud[i].velocity.y;
+	cloud[i].position.z += cloud[i].velocity.z;
+		
+		
+		if (cloud[i].position.y < -10000 && i < 1001){
+			cloud[i].position.y = 10000
+			cloud[i].position.x = Math.floor(Math.random()*20000)-10000
+			cloud[i].position.z = Math.floor(Math.random()*20000)-10000
+			if (cloud[i].velocity.y < 1001){
+			cloud[i].velocity.y -= 100
+			}
+			else{
+				cloud[i].velocity.y = 1000
+			}
+
+			cloud[i].width = Math.floor(Math.random()*200)
+			cloud[i].height = Math.floor(Math.random()*200)
+			cloud[i].length = Math.floor(Math.random()*200)
+		}
+		
+		
+		
+		
+		
+		//if (//player is in radius)!!!!!!!!!!!!!!!!ADD ME WHEN THERE IS TIME
+		if (player.position.x - player.width < cloud[i].position.x + cloud[i].width && 
+				player.position.x + player.width > cloud[i].position.x - cloud[i].width && 
+				player.position.y - player.length < cloud[i].position.y + cloud[i].length && 
+				player.position.y + player.length > cloud[i].position.y - cloud[i].length && 
+				player.position.z - player.height < cloud[i].position.z + cloud[i].height && 
+				player.position.z + player.height > cloud[i].position.z - cloud[i].height) {
+			
+				player.velocity.z = 0
+			
+				if (player.position.x - player.width < cloud[i].position.x + cloud[i].width && player.position.x > cloud[i].position.x + cloud[i].width){
+						player.position.x = cloud[i].position.x + cloud[i].width + player.width
+				}
+				if (player.position.x + player.width > cloud[i].position.x - cloud[i].width && player.position.x < cloud[i].position.x - cloud[i].width){
+						player.position.x = cloud[i].position.x - cloud[i].width - player.width
+				}
+				if (player.position.y - player.length < cloud[i].position.y + cloud[i].length && player.position.y > cloud[i].position.y + cloud[i].length){
+						player.position.y = cloud[i].position.y + cloud[i].length + player.length
+				}
+				if (player.position.y + player.length > cloud[i].position.y - cloud[i].length && player.position.y < cloud[i].position.y - cloud[i].length){
+						player.position.y = cloud[i].position.y - cloud[i].length - player.length
+				}
+				if (player.position.z - player.height < cloud[i].position.z + cloud[i].height && player.position.z > cloud[i].position.z + cloud[i].height){
+						player.position.z = cloud[i].position.z + cloud[i].height + player.height
+				}
+				if (player.position.z + player.height > cloud[i].position.z - cloud[i].height && player.position.z < cloud[i].position.z - cloud[i].height){
+						player.position.z = cloud[i].position.z - cloud[i].height - player.height
+				}
+			
+			/*
+			if (player.velocity.x > 0){
+					player.velocity.x += player.velocity.x
+			}
+			if (player.velocity.x > 0){
+					player.velocity.x -= player.velocity.x
+			}
+			if (player.velocity.y < 0){
+					player.velocity.y += player.velocity.y
+			}
+			if (player.velocity.y < 0){
+					player.velocity.y -= player.velocity.y
+			}*/
+			var taco = 0
+		}
+		else{
+			var taco = 1
+		}
+  }
+	if (taco == 1){
+	player.velocity.z -= game.gravity/100;
+	}
+if (32 in keysDown) {
+	player.velocity.z = player.jump;
+}//space bar
+	
+	
+player.position.x += player.velocity.x;
+player.position.y += player.velocity.y;
+player.position.z += player.velocity.z;
+	
+	
+  
+};
+var moveCamera = function moveCamera() {
+	if (controls.mouse.x > 359) {
+		controls.mouse.x = 0;
+	};
+	if (controls.mouse.x < 0) {
+		controls.mouse.x = 359;
+	};
+	if (controls.mouse.y > 359) {
+		controls.mouse.y = 0;
+	};
+	if (controls.mouse.y < 0) {
+		controls.mouse.y = 359;
+	};
+
+
+	//console.log(path)
+	
+//rotate(camera);
+	/*x1 = 0;
+	y1 = 100;
+	z1 = 0; 
+	x2 = x1*Math.cos(controls.mouse.x/45) + y1*Math.sin(controls.mouse.x/45);
+	y2 = x1*Math.sin(controls.mouse.x/45) - y1*Math.cos(controls.mouse.x/45); 
+	y3 = y2*Math.cos(controls.mouse.y/45) + z1*Math.sin(controls.mouse.y/45);
+	z2 = y2*Math.sin(controls.mouse.y/45) - z1*Math.cos(controls.mouse.y/45);
+	z3 = z2*Math.cos(0) - x2*Math.sin(0);
+	x3 = z2*Math.sin(0) + x2*Math.cos(0);
+	
+	//controls.mouse.x 
+	camera.position.x = -player.position.x - x3;
+	camera.position.y = -player.position.y + y3;
+	camera.position.z = -player.position.z - z3;
+	camera.rotate.x = Math.atan((camera.position.z - player.position.z)/(camera.position.x - player.position.x))*45;
+	camera.rotate.y = Math.atan((camera.position.y - player.position.y)/(camera.position.z - player.position.z))*45;
+	//camera.rotate.y = camera.position.z - player.position.z; 
+	//camera.rotate.z = camera.position.y - player.position.y;
+	//rotate(camera);*/
+																controls.mouse.y = 0;
+																//controls.mouse.x = 180;
+	v = Math.PI*18
+	x1 = 0;
+	y1 = -100; 
+	z1 = 20;
+	
+	x2 = x1*Math.cos(-controls.mouse.x/v) - y1*Math.sin(-controls.mouse.x/v);
+	y2 = x1*Math.sin(-controls.mouse.x/v) + y1*Math.cos(-controls.mouse.x/v);
+	
+	y3 = y2*Math.cos(controls.mouse.y/v) - z1*Math.sin(controls.mouse.y/v);
+	z2 = y2*Math.sin(controls.mouse.y/v) + z1*Math.cos(controls.mouse.y/v);  
+	
+	z3 = z2*Math.cos(0) - x2*Math.sin(0); 
+	x3 = z2*Math.sin(0) + x2*Math.cos(0);
+	
+	camera.position.x = player.position.x + x3;  
+	camera.position.y = player.position.y + y3; 
+	camera.position.z = player.position.z + z3;
+	
+	camera.rotate.x = controls.mouse.x
+	camera.rotate.y = -controls.mouse.y
+	
+		//camera.rotate.x = Math.atan((camera.position.x - player.position.x)/(camera.position.y - player.position.y))*Math.PI*18;
+		//camera.rotate.y = Math.atan((-camera.position.z + player.position.z)/Math.pow(Math.pow(camera.position.x - player.position.x,2) + Math.pow(camera.position.y - player.position.y,2),.5))*Math.PI*18//*Math.abs(-camera.position.y + player.position.y)/(-camera.position.y + player.position.y))*Math.PI*18;
+	/*
+x' = x*cos q - y*sin q
+y' = x*sin q + y*cos q 
+z' = z
+	
+y' = y*cos q - z*sin q
+z' = y*sin q + z*cos q
+x' = x
+	
+z' = z*cos q - x*sin q
+x' = z*sin q + x*cos q
+y' = y
+	*/
+};
+var drawCircle = function drawCircle(circle) {
+	ctx.fillStyle = circle.color;
+	ctx.beginPath();
+	ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2, true);
+	ctx.fill();
+};
+var drawCenter = function drawCenter() {
+	ctx.fillStyle = "blue";
+	ctx.beginPath();
+	ctx.arc(CANVAS_WIDTH/2, CANVAS_HEIGHT/2, 10, 0, Math.PI * 2, true);
+	ctx.fill();
+};
+//function drawRect(rectangle){
+var drawRect = function drawRect(rectangle) {
+	ctx.fillStyle = rectangle.color;
+	ctx.fillRect(rectangle.x - rectangle.width/2, rectangle.y - rectangle.height/2, rectangle.width, rectangle.height);
+};/*
+function rotate(object){//rotates around point zero
+	x1 = object.x + object.width*a;
+	y1 = object.y + object.length*b;
+	z1 = object.z + object.height*c;
+	x2 = x1*Math.cos(object.rotate.x/45) - y1*Math.sin(object.rotate.x/45);
+	y2 = x1*Math.sin(object.rotate.x/45) + y1*Math.cos(object.rotate.x/45);
+	y3 = y2*Math.cos(object.rotate.y/45) - z1*Math.sin(object.rotate.y/45);
+	z2 = y2*Math.sin(object.rotate.y/45) + z1*Math.cos(object.rotate.y/45);
+	z3 = z2*Math.cos(object.rotate.z/45) - x2*Math.sin(object.rotate.z/45);
+	x3 = z2*Math.sin(object.rotate.z/45) + x2*Math.cos(object.rotate.z/45);
+		return CANVAS_HEIGHT*z3/y3 + CANVAS_WIDTH/2
+}*/
+var drawCube = function drawCube(object){
+	/* 
+	width: 10, //pixels 
+	height: 10, //pixels
+  length: 10, //pixels
+	*/
+	v = Math.PI*18;
+	//console.log(a)
+	function posX(a,b,c){ 
+		x1 = camera.position.x - object.position.x + object.width*a;
+		y1 = camera.position.y - object.position.y + object.length*b;
+		z1 = camera.position.z - object.position.z + object.height*c;  
+		x2 = x1*Math.cos((camera.rotate.x+object.rotate.x)/v) - y1*Math.sin((camera.rotate.x+object.rotate.x)/v);
+		y2 = x1*Math.sin((camera.rotate.x+object.rotate.x)/v) + y1*Math.cos((camera.rotate.x+object.rotate.x)/v);
+ 		y3 = y2*Math.cos((camera.rotate.y+object.rotate.y)/v) - z1*Math.sin((camera.rotate.y+object.rotate.y)/v);
+		z2 = y2*Math.sin((camera.rotate.y+object.rotate.y)/v) + z1*Math.cos((camera.rotate.y+object.rotate.y)/v);
+ 		z3 = z2*Math.cos((camera.rotate.z+object.rotate.z)/v) - x2*Math.sin((camera.rotate.z+object.rotate.z)/v);
+		x3 = z2*Math.sin((camera.rotate.z+object.rotate.z)/v) + x2*Math.cos((camera.rotate.z+object.rotate.z)/v);
+		return CANVAS_HEIGHT*-x3/Math.pow(Math.sqrt(-y3),2) + CANVAS_WIDTH/2
+	}
+	function posY(a,b,c){
+		x1 = camera.position.x - object.position.x + object.width*a;
+		y1 = camera.position.y - object.position.y + object.length*b;
+		z1 = camera.position.z - object.position.z + object.height*c;  
+		x2 = x1*Math.cos((camera.rotate.x+object.rotate.x)/v) - y1*Math.sin((camera.rotate.x+object.rotate.x)/v);
+		y2 = x1*Math.sin((camera.rotate.x+object.rotate.x)/v) + y1*Math.cos((camera.rotate.x+object.rotate.x)/v);
+ 		y3 = y2*Math.cos((camera.rotate.y+object.rotate.y)/v) - z1*Math.sin((camera.rotate.y+object.rotate.y)/v);
+		z2 = y2*Math.sin((camera.rotate.y+object.rotate.y)/v) + z1*Math.cos((camera.rotate.y+object.rotate.y)/v);
+ 		z3 = z2*Math.cos((camera.rotate.z+object.rotate.z)/v) - x2*Math.sin((camera.rotate.z+object.rotate.z)/v);
+		x3 = z2*Math.sin((camera.rotate.z+object.rotate.z)/v) + x2*Math.cos((camera.rotate.z+object.rotate.z)/v);
+		//console.log(z3)
+		return CANVAS_HEIGHT*z3/Math.pow(Math.sqrt(-y3),2) + CANVAS_HEIGHT/2 
+	}
+		function pos(a,b,c){
+		x1 = camera.position.x - object.position.x + object.width*a;
+		y1 = camera.position.y - object.position.y + object.length*b;
+		z1 = camera.position.z - object.position.z + object.height*c;   
+		x2 = x1*Math.cos((camera.rotate.x+object.rotate.x)/v) - y1*Math.sin((camera.rotate.x+object.rotate.x)/v);
+		y2 = x1*Math.sin((camera.rotate.x+object.rotate.x)/v) + y1*Math.cos((camera.rotate.x+object.rotate.x)/v);
+ 		y3 = y2*Math.cos((camera.rotate.y+object.rotate.y)/v) - z1*Math.sin((camera.rotate.y+object.rotate.y)/v);
+		z2 = y2*Math.sin((camera.rotate.y+object.rotate.y)/v) + z1*Math.cos((camera.rotate.y+object.rotate.y)/v);
+ 		z3 = z2*Math.cos((camera.rotate.z+object.rotate.z)/v) - x2*Math.sin((camera.rotate.z+object.rotate.z)/v);
+		x3 = z2*Math.sin((camera.rotate.z+object.rotate.z)/v) + x2*Math.cos((camera.rotate.z+object.rotate.z)/v);
+		object.screen.x = CANVAS_HEIGHT*-x3/Math.pow(Math.sqrt(-y3),2) + CANVAS_WIDTH/2;
+		object.screen.y = CANVAS_HEIGHT*z3/Math.pow(Math.sqrt(-y3),2) + CANVAS_HEIGHT/2;
+		ctx.lineTo(object.screen.x, object.screen.y);
+		//return CANVAS_HEIGHT*z3/y3 + CANVAS_HEIGHT/2
+	}
+	function cubeloop(){
+		//console.log(object.color,object.screen.x,object.screen.y)
+		//bottom
+ctx.moveTo(posX(1,1,1), posY(1,1,1));
+pos(-1,1,1)
+pos(-1,-1,1)
+pos(1,-1,1)
+pos(1,1,1)
+		//top
+ctx.moveTo(posX(1,1,-1), posY(1,1,-1));
+pos(-1,1,-1)
+pos(-1,-1,-1)
+pos(1,-1,-1)
+pos(1,1,-1)
+		//front
+ctx.moveTo(posX(1,-1,1), posY(1,-1,1));
+pos(-1,-1,1)
+pos(-1,-1,-1)
+pos(1,-1,-1)
+pos(1,-1,1)
+		//back
+ctx.moveTo(posX(1,1,1), posY(1,1,1));
+pos(-1,1,1)
+pos(-1,1,-1)
+pos(1,1,-1)
+pos(1,1,1)
+		
+		//left
+ctx.moveTo(posX(1,1,1), posY(1,1,1));
+pos(1,1,-1)
+pos(1,-1,-1)
+pos(1,-1,1)
+pos(1,1,1)
+		//right
+ctx.moveTo(posX(-1,1,1), posY(-1,1,1));
+pos(-1,1,-1)
+pos(-1,-1,-1)
+pos(-1,-1,1)
+pos(-1,1,1)
+		/*
+		//bottom
+		ctx.moveTo(posX(1,1,1), posY(1,1,1));
+		ctx.lineTo(posX(-1,1,1), posY(-1,1,1));
+		ctx.lineTo(posX(-1,-1,1), posY(-1,-1,1));
+		ctx.lineTo(posX(1,-1,1), posY(1,-1,1));
+		ctx.lineTo(posX(1,1,1), posY(1,1,1));
+		//top
+		ctx.moveTo(posX(1,1,-1), posY(1,1,-1));
+		ctx.lineTo(posX(-1,1,-1), posY(-1,1,-1));
+		ctx.lineTo(posX(-1,-1,-1), posY(-1,-1,-1));
+		ctx.lineTo(posX(1,-1,-1), posY(1,-1,-1));
+		ctx.lineTo(posX(1,1,-1), posY(1,1,-1));
+		//front
+		ctx.moveTo(posX(1,-1,1), posY(1,-1,1));
+		ctx.lineTo(posX(-1,-1,1), posY(-1,-1,1));
+		ctx.lineTo(posX(-1,-1,-1), posY(-1,-1,-1));
+		ctx.lineTo(posX(1,-1,-1), posY(1,-1,-1));
+		ctx.lineTo(posX(1,-1,1), posY(1,-1,1));
+		//back
+		ctx.moveTo(posX(1,1,1), posY(1,1,1));
+		ctx.lineTo(posX(-1,1,1), posY(-1,1,1));
+		ctx.lineTo(posX(-1,1,-1), posY(-1,1,-1));
+		ctx.lineTo(posX(1,1,-1), posY(1,1,-1));
+		ctx.lineTo(posX(1,1,1), posY(1,1,1));
+		
+		//left
+		ctx.moveTo(posX(1,1,1), posY(1,1,1));
+		ctx.lineTo(posX(1,1,-1), posY(1,1,-1));
+		ctx.lineTo(posX(1,-1,-1), posY(1,-1,-1));
+		ctx.lineTo(posX(1,-1,1), posY(1,-1,1));
+		ctx.lineTo(posX(1,1,1), posY(1,1,1));
+		//right
+		ctx.moveTo(posX(-1,1,1), posY(-1,1,1));
+		ctx.lineTo(posX(-1,1,-1), posY(-1,1,-1));
+		ctx.lineTo(posX(-1,-1,-1), posY(-1,-1,-1));
+		ctx.lineTo(posX(-1,-1,1), posY(-1,-1,1));
+		ctx.lineTo(posX(-1,1,1), posY(-1,1,1));*/
+
+		
+		
+	/*	var ii = 0; 
+		var iii = 0;
+		for (var i = 0;; i++) { 
+			if (i > 1) {i = 0; ii += 1;}
+			if (ii > 1) {ii = 0; iii += 1;}
+			if (iii > 1) break;
+			//console.log(i,ii,iii);
+			ctx.lineTo(posX(i*2-1,ii*2-1,iii*2-1), posY(i*2-1,ii*2-1,iii*2-1));
+		}*/
+	} 
+	ctx.strokeStyle = object.color;
+	ctx.fillStyle = "#0095DD";
+	//ctx.fillStyle = object.color;
+	//ctx.lineWidth=100/Math.sqrt(object.x*object.x+object.y*object.y+object.z*object.z);//Fix later
+	ctx.lineWidth = 1000/Math.sqrt(Math.pow(object.position.x-camera.position.x,2) + Math.pow(object.position.y-camera.position.y,2) + Math.pow(object.position.z-camera.position.x,2));
+	ctx.lineJoin = 'round'; 
+	ctx.beginPath(); 
+	ctx.moveTo(posX(1,1,1),posY(1,1,1));
+	//console.log(posX(1,1,1),posY(1,1,1));
+	//console.log(object);
+	cubeloop();
+	//ctx.fill();
+	ctx.stroke();
+	ctx.closePath();
+}
+var animationLoop = function animationLoop() {
+	requestAnimFrame(animationLoop);
+	render();
+};
+function drawWords(word,x,y) {
+	ctx.font = "16px Arial";
+	ctx.fillStyle = "#000000"; //"#0095DD"
+	ctx.fillText(word, x, y);
+}
+window.onload = function () {
+	c = document.getElementById('canvas');
+	c.width = CANVAS_WIDTH;
+	c.height = CANVAS_HEIGHT;
+	ctx = c.getContext('2d');
+	addEventListener('keydown', function (e) {keysDown[e.keyCode] = true;}, false);
+	addEventListener('keyup', function (e) {delete keysDown[e.keyCode];}, false);
+	//addEventListener('mousedown', gameRestart); //WILL BE NEEDED LATER
+	for (var i = 0; i < 1000; i++) {
+		var object = {
+			position: {
+				/*x:0,
+				y:0,
+				z:0*/
+				
+				x: Math.floor(Math.random()*20000)-10000,//Invalid if followPlayer is true
+				y: Math.floor(Math.random()*20000)-10000,//Invalid if followPlayer is true
+				z: Math.floor(Math.random()*20000)-10000,//Invalid if followPlayer is true
+			},
+			acceleration: {
+				x: 0,
+				y: -1,
+				z: 0,
+			},
+			velocity: {
+				x: 0,
+				y: -Math.random()-1,
+				z: 0,
+			},
+			rotate: {
+				x: 0,
+				y: 0,
+				z: 0,
+			},
+			screen:{
+				x: 0,
+				y: 0,
+				z: 0,
+			},
+			x: 0,
+			y: 0,
+			z: 0,
+			/*x: Math.floor(Math.random()*1000 - 500),
+			y: Math.floor(Math.random()*1000 - 500),
+			z: Math.floor(Math.random()*1000 - 500),*/
+			width: Math.floor(Math.random()*200),
+			height: Math.floor(Math.random()*200), 
+			length: Math.floor(Math.random()*200),
+			radius: 25, //if circle. Delete later.
+			color: 'lightblue',
+			speed: 1,
+			anchored: true,
+			density: 1,
+		};
+		cloud.push(object);
+		//console.log()
+	}
+	for (var i = 1000; i < 1050; i++) {
+		var object = {
+			position: {
+				/*x:0,
+				y:0,
+				z:0*/
+				
+				x: Math.floor(Math.random()*4000)-2000,//Invalid if followPlayer is true
+				y: Math.floor(Math.random()*4000)-2000,//Invalid if followPlayer is true
+				z: Math.floor(Math.random()*2000),//Invalid if followPlayer is true
+			},
+			acceleration: {
+				x: 0,
+				y: -1,
+				z: 0,
+			},
+			velocity: {
+				x: 0,
+				y: 0,
+				z: 0,
+			},
+			rotate: {
+				x: 0,
+				y: 0,
+				z: 0,
+			},
+			screen:{
+				x: 0,
+				y: 0,
+				z: 0,
+			},
+			x: 0,
+			y: 0,
+			z: 0,
+			/*x: Math.floor(Math.random()*1000 - 500),
+			y: Math.floor(Math.random()*1000 - 500),
+			z: Math.floor(Math.random()*1000 - 500),*/
+			width: Math.floor(Math.random()*200+10),
+			height: Math.floor(Math.random()*200+10), 
+			length: Math.floor(Math.random()*200+10),
+			radius: 25, //if circle. Delete later.
+			color: 'red',
+			speed: 1,
+			anchored: true,
+			density: 1,
+		};
+		cloud.push(object);
+		//console.log()
+	}
+	timeStart = performance.now(); //DO NOT DELETE YET. COULD BE INPORTANT
+	animationLoop();
+};
+
+
+
+
+
+
+canvas.requestPointerLock = canvas.requestPointerLock ||canvas.mozRequestPointerLock;
+document.exitPointerLock = document.exitPointerLock ||document.mozExitPointerLock;
+canvas.onclick = function() {canvas.requestPointerLock();};
+document.addEventListener('pointerlockchange', lockChangeAlert, false);
+document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+function lockChangeAlert() {
+  if (document.pointerLockElement === canvas ||
+	  document.mozPointerLockElement === canvas) {
+	//console.log('pointerLock true');
+	document.addEventListener("mousemove", updatePosition, false);
+  } else {  
+	//console.log('pointerLock false');  
+	document.removeEventListener("mousemove", updatePosition, false);
+  }
+}
+function updatePosition(e) {
+	controls.mouse.x += e.movementX*controls.mouse.sensitivity;
+	controls.mouse.y -= e.movementY*controls.mouse.sensitivity;
+			/*camera.rotate.x += e.movementX*camera.rotate.speed;
+			camera.rotate.y += e.movementY*camera.rotate.speed;
+			//camera.yRotation += e.movementY*camera.rotationSpeed;
+			camera.rotate.z = 0;*/
+}
+    </script>
+</body>
+</html>

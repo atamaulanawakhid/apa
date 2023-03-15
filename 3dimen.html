@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Small 3D Flower</title>
+    <style>
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const geometry = new THREE.SphereGeometry(1, 16, 16);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff69b4 });
+      const flower = new THREE.Group();
+
+      const petals = new THREE.Group();
+      for (let i = 0; i < 10; i++) {
+        const petalGeometry = new THREE.ConeGeometry(0.5, 2, 8);
+        const petalMaterial = new THREE.MeshBasicMaterial({
+          color: 0xf7e7b1,
+        });
+        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+        petal.position.set(0, 1, 0);
+        petal.rotation.z = (i * Math.PI) / 5;
+        petals.add(petal);
+      }
+
+      const centerGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+      const centerMaterial = new THREE.MeshBasicMaterial({
+        color: 0xe84118,
+      });
+      const center = new THREE.Mesh(centerGeometry, centerMaterial);
+      center.position.set(0, 1, 0);
+
+      flower.add(petals, center);
+      scene.add(flower);
+
+      camera.position.z = 5;
+
+      function animate() {
+        requestAnimationFrame(animate);
+        flower.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>
