@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Input Data</title>
+  </head>
+  <body>
+    <h1>Input Data</h1>
+    <form>
+      <label for="input-field">Enter data:</label>
+      <input type="text" id="input-field" name="input-field">
+      <button type="submit">Submit</button>
+    </form>
+    <hr>
+    <h2>Entered Data:</h2>
+    <ul id="output"></ul>
+    <script>
+      const form = document.querySelector('form');
+      const inputField = document.querySelector('#input-field');
+      const output = document.querySelector('#output');
+      
+      // Load saved data from web storage
+      const savedData = JSON.parse(localStorage.getItem('inputData')) || [];
+      savedData.forEach((data) => {
+        const li = document.createElement('li');
+        li.textContent = data;
+        output.appendChild(li);
+      });
+      
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const data = inputField.value;
+        const li = document.createElement('li');
+        li.textContent = data;
+        output.appendChild(li);
+        
+        // Save data to web storage
+        const savedData = JSON.parse(localStorage.getItem('inputData')) || [];
+        savedData.push(data);
+        localStorage.setItem('inputData', JSON.stringify(savedData));
+        
+        inputField.value = '';
+      });
+    </script>
+  </body>
+</html>
