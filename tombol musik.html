@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>halo, saya Ata Maulana Wakhid</div>
+
+    <button onclick="pagelain()">Pergi ke page lain.html</button>
+    <div id="iframe-container"></div>
+
+    <script>
+        function pagelain() {
+            var audio = new Audio("musik/L's theme A_Let_X8");
+            audio.play();
+
+            var iframe = document.createElement('iframe');
+            iframe.src = 'pagelain.html';
+            iframe.style.display = '';
+
+            document.getElementById('iframe-container').appendChild(iframe);
+        }
+    </script>
+</body>
+</html>
